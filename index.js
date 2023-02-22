@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors()); //cors origin
+app.use(express.json()); 
 const mongoose = require('mongoose');
 
-const port = 5000 | process.env.PORT
+const port = process.env.PORT || 5000
 
 app.get('/', (req, res) => {
   res.send('Derana News Assignment Backend API Running');

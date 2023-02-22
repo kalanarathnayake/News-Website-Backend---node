@@ -1,4 +1,4 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs"); //hash feature
 const Admin = require("../model/Admin.model");
 const jwt = require("jsonwebtoken");
 
