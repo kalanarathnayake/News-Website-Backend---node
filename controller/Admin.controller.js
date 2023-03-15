@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs"); //hash feature
 const Admin = require("../model/Admin.model");
+const Counter = require("../model/Counter.model")
 const jwt = require("jsonwebtoken");
 
 //get Admin details
@@ -65,37 +66,56 @@ const register = async (req, res) => {
     if (user) {
       return res.status(400).json({ errors: [{ msg: "Admin already exist" }] });
     }
+    
+    //counter id feature
+    Counter.findOneAndUpdate(
+      { id: 'autoval' },
+      { "$inc": { seq: 1 } },
+      { new: true }, async (err, cd) => {
+        let seqId;
+        if (cd == null) {
+          const newval = new Counter({ id: "autoval", seq: 1 })
+          newval.save()
+          seqId = 1
+        }
+        else {
+          seqId = cd.seq
+        }
+        
+        //create a user instance
+        user = new Admin({
+          fullName,
+          email,
+          password,
+          id: seqId
+        });
 
-    //create a user instance
-    user = new Admin({
-      fullName,
-      email,
-      password,
-    });
+        //Encrypt Password feature
 
-    //Encrypt Password
+        //10 is enogh..if you want more secured.user a value more than 10
+        const salt = await bcrypt.genSalt(10);
 
-    //10 is enogh..if you want more secured.user a value more than 10
-    const salt = await bcrypt.genSalt(10);
+        //hashing password
+        user.password = await bcrypt.hash(password, salt);
 
-    //hashing password
-    user.password = await bcrypt.hash(password, salt);
+        //save user to the database
+        await user.save();
 
-    //save user to the database
-    await user.save();
+        //Return jsonwebtoken
 
-    //Return jsonwebtoken
+        const payload = {
+          user: {
+            id: user.id,
+          },
+        };
 
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
+        jwt.sign(payload, "mysecrettoken", { expiresIn: 360000 }, (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        });
+      }
+    )
 
-    jwt.sign(payload, "mysecrettoken", { expiresIn: 360000 }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
   } catch (err) {
     //Something wrong with the server
     console.error(err.message);
