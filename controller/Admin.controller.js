@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs"); //hash feature
 const Admin = require("../model/Admin.model");
 const Counter = require("../model/Counter.model")
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer")
 
 //get Admin details
 const getAdmin = async (req, res) => {
@@ -55,8 +56,8 @@ const login = async (req, res) => {
   }
 };
 
-//Register admin
-const register = async (req, res) => {
+  //Register admin
+  const register = async (req, res) => {
   const { fullName, email, password } = req.body;
 
   try {
@@ -66,7 +67,7 @@ const register = async (req, res) => {
     if (user) {
       return res.status(400).json({ errors: [{ msg: "Admin already exist" }] });
     }
-    
+
     //counter id feature
     Counter.findOneAndUpdate(
       { id: 'autoval' },
@@ -81,7 +82,7 @@ const register = async (req, res) => {
         else {
           seqId = cd.seq
         }
-        
+
         //create a user instance
         user = new Admin({
           fullName,
@@ -91,7 +92,6 @@ const register = async (req, res) => {
         });
 
         //Encrypt Password feature
-
         //10 is enogh..if you want more secured.user a value more than 10
         const salt = await bcrypt.genSalt(10);
 
@@ -102,7 +102,6 @@ const register = async (req, res) => {
         await user.save();
 
         //Return jsonwebtoken
-
         const payload = {
           user: {
             id: user.id,
@@ -113,6 +112,35 @@ const register = async (req, res) => {
           if (err) throw err;
           res.json({ token });
         });
+
+        // nodemailer feature
+        let testAccount = await nodemailer.createTestAccount();
+
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: testAccount.user, // generated ethereal user
+            pass: testAccount.pass, // generated ethereal password
+          },
+        });
+
+        // send mail with defined transport object
+        let message = {
+          from: '"Fred Foo 👻" <foo@example.com>', // sender address
+          to: "bar@example.com, baz@example.com", // list of receivers
+          subject: "Hello ✔", // Subject line
+          text: "Hello world?", // plain text body
+          html: "<b>Hello world?</b>", // html body
+        }
+
+        transporter.sendMail(message).then(() => {
+          return res.status(201).json({msg:"Employee Should Receive an email."})
+        }).catch(err => {
+          return res.status(500).json({error})
+        })
       }
     )
 
