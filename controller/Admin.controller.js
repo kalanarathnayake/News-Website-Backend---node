@@ -138,7 +138,7 @@ const login = async (req, res) => {
 
         transporter.sendMail(message).then(() => {
           return res.status(201).json({msg:"Employee Should Receive an email."})
-        }).catch(err => {
+        }).catch(err => {s
           return res.status(500).json({error})
         })
       }
