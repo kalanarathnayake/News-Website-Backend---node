@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs"); //hash feature
 const Admin = require("../model/Admin.model");
 const Counter = require("../model/Counter.model")
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer")
+const nodemailer = require("nodemailer");
 
 //get Admin details
 const getAdmin = async (req, res) => {
@@ -56,8 +56,8 @@ const login = async (req, res) => {
   }
 };
 
-  //Register admin
-  const register = async (req, res) => {
+//Register admin
+const register = async (req, res) => {
   const { fullName, email, password } = req.body;
 
   try {
@@ -82,7 +82,6 @@ const login = async (req, res) => {
         else {
           seqId = cd.seq
         }
-
         //create a user instance
         user = new Admin({
           fullName,
@@ -91,63 +90,72 @@ const login = async (req, res) => {
           id: seqId
         });
 
-        //Encrypt Password feature
-        //10 is enogh..if you want more secured.user a value more than 10
-        const salt = await bcrypt.genSalt(10);
-
-        //hashing password
-        user.password = await bcrypt.hash(password, salt);
-
-        //save user to the database
-        await user.save();
-
-        //Return jsonwebtoken
-        const payload = {
-          user: {
-            id: user.id,
-          },
-        };
-
-        jwt.sign(payload, "mysecrettoken", { expiresIn: 360000 }, (err, token) => {
-          if (err) throw err;
-          res.json({ token });
-        });
-
-        // nodemailer feature
+        //nodemailer feature
         let testAccount = await nodemailer.createTestAccount();
-
         // create reusable transporter object using the default SMTP transport
         let transporter = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
-          port: 587,
-          secure: false, // true for 465, false for other ports
+          // host: "",
+          // service:gmail,
+          // port: 587,
+          // secure: false, // true for 465, false for other ports
+          // auth: {
+          //   user: "kgrdevmail@gmail.com", // generated ethereal user
+          //   pass: "12345678!@#$", // generated ethereal password
+          // }
+          service: 'hotmail',
           auth: {
-            user: testAccount.user, // generated ethereal user
-            pass: testAccount.pass, // generated ethereal password
+            user: 'kgruser006@outlook.com',
+            pass: 'It19202600@3Kalana'
+          },
+          tls: {
+            // do not fail on invalid certs
+            rejectUnauthorized: false
           },
         });
 
         // send mail with defined transport object
         let message = {
-          from: '"Fred Foo 👻" <foo@example.com>', // sender address
-          to: "bar@example.com, baz@example.com", // list of receivers
-          subject: "Hello ✔", // Subject line
-          text: "Hello world?", // plain text body
+          from: "kgruser006@outlook.com", // sender address
+          to: "kalanagayanga8@gmail.com", // list of receivers
+          subject: "Testing ✔", // Subject line
+          text: "Hello world Test?", // plain text body
           html: "<b>Hello world?</b>", // html body
         }
 
-        transporter.sendMail(message).then(() => {
-          return res.status(201).json({msg:"Employee Should Receive an email."})
-        }).catch(err => {s
-          return res.status(500).json({error})
-        })
+        const ismsgsent = await transporter.sendMail(message)
+
+        if (ismsgsent.messageId) {
+
+          //Encrypt Password feature
+          //10 is enogh..if you want more secured.user a value more than 10
+          const salt = await bcrypt.genSalt(10);
+
+          //hashing password
+          user.password = await bcrypt.hash(password, salt);
+
+          //save user to the database
+          await user.save();
+
+          //Return jsonwebtoken
+          const payload = {
+            user: {
+              id: user.id,
+            },
+          };
+
+          jwt.sign(payload, "mysecrettoken", { expiresIn: 360000 }, (err, token) => {
+            if (err) throw err;
+            res.json({ token });
+          });
+
+        }
       }
     )
 
   } catch (err) {
     //Something wrong with the server
     console.error(err.message);
-    return res.status(500).send("Server Error");
+    return res.status(500).send(err.message);
   }
 };
 

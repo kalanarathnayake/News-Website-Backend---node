@@ -1,1 +1,0 @@
-const nodeMailer = require('nodemailer')
